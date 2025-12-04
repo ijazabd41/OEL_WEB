@@ -1,8 +1,7 @@
-// Core list + mode logic
+// Core list + mode logic with Database Integration
 (function () {
+  const API_BASE_URL = "http://localhost:5000/api";
   const STORAGE_KEYS = {
-    ITEMS: "dualNature_items",
-    STATS: "dualNature_stats",
     MODE: "dualNature_mode",
   };
 
@@ -47,42 +46,113 @@
     foundControllerEgg: false,
   };
 
-  function loadState() {
+  // ========== DATABASE API CALLS ==========
+
+  async function fetchTasks() {
     try {
-      const savedItems = window.localStorage.getItem(STORAGE_KEYS.ITEMS);
-      const savedStats = window.localStorage.getItem(STORAGE_KEYS.STATS);
+      const response = await fetch(`${API_BASE_URL}/tasks`);
+      if (!response.ok) throw new Error('Failed to fetch tasks');
+      const tasks = await response.json();
+      items = tasks.map(task => ({
+        id: task.id,
+        text: task.text,
+        completed: task.completed
+      }));
+      renderItems();
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      items = [];
+      renderItems();
+    }
+  }
+
+  async function fetchStats() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stats`);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      const fetchedStats = await response.json();
+      stats = { ...stats, ...fetchedStats };
+      renderStats();
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      renderStats();
+    }
+  }
+
+  async function createTask(taskData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData)
+      });
+      if (!response.ok) throw new Error('Failed to create task');
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating task:', error);
+      return null;
+    }
+  }
+
+  async function updateTask(id, updateData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+      if (!response.ok) throw new Error('Failed to update task');
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      return null;
+    }
+  }
+
+  async function deleteTaskFromDB(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete task');
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      return null;
+    }
+  }
+
+  async function updateStats(statsData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stats`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(statsData)
+      });
+      if (!response.ok) throw new Error('Failed to update stats');
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating stats:', error);
+      return null;
+    }
+  }
+
+  async function loadState() {
+    try {
       const savedMode = window.localStorage.getItem(STORAGE_KEYS.MODE);
-      if (savedItems) items = JSON.parse(savedItems);
-      if (savedStats) stats = { ...stats, ...JSON.parse(savedStats) };
       if (savedMode === "engaged") {
         body.classList.add("mode-engaged");
         modeToggle.textContent = "Switch to Focus Mode";
       }
-    } catch (_) {
-      // ignore storage errors – app still works
+
+      await Promise.all([fetchTasks(), fetchStats()]);
+    } catch (error) {
+      console.error('Error loading state:', error);
     }
   }
 
-  function persistState() {
+  function persistMode() {
     try {
-      window.localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
-      window.localStorage.setItem(
-        STORAGE_KEYS.STATS,
-        JSON.stringify({
-          level: stats.level,
-          xp: stats.xp,
-          streak: stats.streak,
-          completedTotal: stats.completedTotal,
-          lastCompletedDay: stats.lastCompletedDay,
-          achievements: stats.achievements,
-          combo: stats.combo,
-          lastCompletionAt: stats.lastCompletionAt,
-          dailyQuestTarget: stats.dailyQuestTarget,
-          dailyQuestProgress: stats.dailyQuestProgress,
-          dailyQuestDay: stats.dailyQuestDay,
-          foundControllerEgg: stats.foundControllerEgg,
-        })
-      );
       window.localStorage.setItem(
         STORAGE_KEYS.MODE,
         body.classList.contains("mode-engaged") ? "engaged" : "minimal"
@@ -189,7 +259,7 @@
     }
   }
 
-  function awardXP(delta, context) {
+  async function awardXP(delta, context) {
     stats.xp = Math.max(0, stats.xp + delta);
     const newLevel = Math.floor(stats.xp / XP_LEVEL_STEP) + 1;
     if (newLevel > stats.level) {
@@ -204,6 +274,7 @@
     } else if (context === "complete") {
       spawnConfetti("small");
     }
+    await updateStats(stats);
   }
 
   function setHypeMessage(options, fallback) {
@@ -218,14 +289,13 @@
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   }
 
-  function handleCompletionStreak() {
+  async function handleCompletionStreak() {
     const today = todayKey();
     if (stats.lastCompletedDay === today) return;
     const yesterdayDate = new Date();
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yKey = `${yesterdayDate.getFullYear()}-${
-      yesterdayDate.getMonth() + 1
-    }-${yesterdayDate.getDate()}`;
+    const yKey = `${yesterdayDate.getFullYear()}-${yesterdayDate.getMonth() + 1
+      }-${yesterdayDate.getDate()}`;
 
     if (stats.lastCompletedDay === yKey) {
       stats.streak += 1;
@@ -239,9 +309,10 @@
     } else if (stats.streak === 7) {
       addAchievement("7‑day streak", "One full week of momentum!");
     }
+    await updateStats(stats);
   }
 
-  function updateComboAndQuest() {
+  async function updateComboAndQuest() {
     const now = Date.now();
     const COMBO_WINDOW_MS = 10000;
 
@@ -270,7 +341,7 @@
       stats.dailyQuestProgress === stats.dailyQuestTarget &&
       stats.dailyQuestTarget > 0
     ) {
-      awardXP(20, "quest");
+      await awardXP(20, "quest");
       addAchievement(
         "Quest complete",
         `You finished today's quest of ${stats.dailyQuestTarget} items.`
@@ -282,7 +353,7 @@
     }
 
     if (stats.combo >= 3) {
-      awardXP(3, "combo");
+      await awardXP(3, "combo");
       if (stats.combo === 3) {
         addAchievement("Combo starter", "Hit a 3‑item completion combo.");
       } else if (stats.combo === 5) {
@@ -298,6 +369,7 @@
         "Nice work!"
       );
     }
+    await updateStats(stats);
   }
 
   function addAchievement(title, description) {
@@ -371,27 +443,32 @@
     setTimeout(cleanup, 1900);
   }
 
-  function addItem(text) {
+  async function addItem(text) {
     const item = {
       id: Date.now().toString(36) + Math.random().toString(16).slice(2),
       text: text.trim(),
       completed: false,
     };
-    items.unshift(item);
-    renderItems();
-    persistState();
+
+    const createdTask = await createTask(item);
+    if (createdTask) {
+      await fetchTasks();
+    }
   }
 
-  function toggleItem(id, liElement) {
+  async function toggleItem(id, liElement) {
     const item = items.find((i) => i.id === id);
     if (!item) return;
     const wasCompleted = item.completed;
     item.completed = !item.completed;
+
+    await updateTask(id, { completed: item.completed });
+
     if (!wasCompleted && item.completed) {
       stats.completedTotal += 1;
-      awardXP(XP_PER_COMPLETE, "complete");
-      handleCompletionStreak();
-      updateComboAndQuest();
+      await awardXP(XP_PER_COMPLETE, "complete");
+      await handleCompletionStreak();
+      await updateComboAndQuest();
       playCheer();
       if (liElement) {
         runBikeOverItem(liElement);
@@ -401,23 +478,25 @@
       } else if (stats.completedTotal === 10) {
         addAchievement("10 items", "Ten items completed. Momentum unlocked.");
       }
+      await updateStats(stats);
     } else if (wasCompleted && !item.completed) {
-      awardXP(XP_PER_DELETE_COMPLETED, "undo");
+      await awardXP(XP_PER_DELETE_COMPLETED, "undo");
     }
     renderItems();
     renderStats();
-    persistState();
   }
 
-  function deleteItem(id) {
+  async function deleteItem(id) {
     const item = items.find((i) => i.id === id);
+
+    await deleteTaskFromDB(id);
     items = items.filter((i) => i.id !== id);
+
     if (item && item.completed) {
-      awardXP(XP_PER_DELETE_COMPLETED, "deleteCompleted");
+      await awardXP(XP_PER_DELETE_COMPLETED, "deleteCompleted");
     }
     renderItems();
     renderStats();
-    persistState();
   }
 
   function toggleMode() {
@@ -425,7 +504,7 @@
     modeToggle.textContent = engaged
       ? "Switch to Focus Mode"
       : "Switch to Play Mode";
-    persistState();
+    persistMode();
   }
 
   // Event wiring
@@ -461,7 +540,7 @@
   }
 
   if (controllerEgg) {
-    controllerEgg.addEventListener("mouseenter", () => {
+    controllerEgg.addEventListener("mouseenter", async () => {
       controllerEgg.classList.add("controller-egg--wiggle");
       window.setTimeout(() => {
         controllerEgg.classList.remove("controller-egg--wiggle");
@@ -469,7 +548,7 @@
 
       if (!stats.foundControllerEgg) {
         stats.foundControllerEgg = true;
-        awardXP(5, "egg");
+        await awardXP(5, "egg");
         addAchievement(
           "Secret found",
           "You discovered the hidden controller. Gamer mode unlocked."
@@ -479,7 +558,7 @@
           "Secret found!"
         );
         renderStats();
-        persistState();
+        await updateStats(stats);
       } else {
         setHypeMessage(
           ["Controller vibes.", "Tap tap tap.", "Press start to continue."],
@@ -490,8 +569,4 @@
   }
 
   loadState();
-  renderItems();
-  renderStats();
 })();
-
-
