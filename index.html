@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dual Nature List – Minimal & Playful</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="mode-minimal">
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="app-title-group">
+          <h1 class="app-title">Dual Nature List</h1>
+          <p class="app-subtitle">
+            One app, two personalities: focus mode and play mode.
+          </p>
+        </div>
+        <div class="header-controls">
+          <button id="modeToggle" class="mode-toggle" aria-label="Toggle design mode">
+            Switch to Play Mode
+          </button>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <section class="panel panel-primary">
+          <header class="panel-header">
+            <h2 class="panel-title">Your Items</h2>
+            <p class="panel-subtitle minimal-only">
+              Add what matters. Nothing else on the screen competes with it.
+            </p>
+          </header>
+
+          <form id="itemForm" class="item-form" autocomplete="off">
+            <input
+              id="itemInput"
+              class="item-input"
+              type="text"
+              placeholder="Add a new item…"
+              aria-label="Item text"
+              required
+            />
+            <button class="item-submit" type="submit">Add</button>
+          </form>
+
+          <ul id="itemList" class="item-list" aria-live="polite"></ul>
+        </section>
+
+        <aside class="panel panel-secondary engaged-only" aria-live="polite">
+          <header class="panel-header">
+            <h2 class="panel-title">Play Stats</h2>
+            <p class="panel-subtitle">
+              Complete items to earn points, level up, and keep your streak alive.
+            </p>
+          </header>
+
+          <div class="controller-egg-wrapper">
+            <img
+              src="assets/Controller.png"
+              alt="Hidden game controller"
+              id="controllerEgg"
+              class="controller-egg"
+              loading="lazy"
+            />
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Level</div>
+              <div id="statLevel" class="stat-value">1</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">XP</div>
+              <div id="statXP" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Streak</div>
+              <div id="statStreak" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Completed</div>
+              <div id="statCompleted" class="stat-value">0</div>
+            </div>
+          </div>
+
+          <div class="xp-bar">
+            <div id="xpFill" class="xp-fill"></div>
+          </div>
+
+          <div class="quest-card">
+            <div class="quest-header">
+              <span class="quest-label">Daily Quest</span>
+              <span id="questStatus" class="quest-status">0 / 5 today</span>
+            </div>
+            <div class="quest-progress">
+              <div id="questFill" class="quest-fill"></div>
+            </div>
+          </div>
+
+          <div class="play-extras">
+            <span id="comboBadge" class="combo-badge">Combo x1</span>
+            <span id="hypeMessage" class="hype-message">
+              Complete something to start your combo.
+            </span>
+          </div>
+
+          <ul id="achievements" class="achievement-list"></ul>
+        </aside>
+      </main>
+
+      <footer class="app-footer">
+        <p class="minimal-only">
+          Minimal focus by default. Tap the switch for a more playful experience.
+        </p>
+        <p class="engaged-only">
+          You’re in Play Mode. Try completing items to see animations and rewards.
+        </p>
+      </footer>
+    </div>
+
+    <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+
+    <audio
+      id="cheerAudio"
+      src="assets/crowd-cheer.mp3"
+      preload="auto"
+    ></audio>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+
+
