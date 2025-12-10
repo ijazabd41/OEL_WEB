@@ -16,6 +16,14 @@
           </p>
         </div>
         <div class="header-controls">
+          <div class="user-box engaged-only">
+            <button id="profileBtn" class="profile-btn" type="button">
+              <span id="userNameLabel" class="user-name">Guest</span>
+            </button>
+            <button id="logoutBtn" class="logout-btn" type="button">
+              Logout
+            </button>
+          </div>
           <button id="modeToggle" class="mode-toggle" aria-label="Toggle design mode">
             Switch to Play Mode
           </button>
@@ -40,6 +48,11 @@
               aria-label="Item text"
               required
             />
+            <select id="itemPriority" class="item-priority" aria-label="Priority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
             <button class="item-submit" type="submit">Add</button>
           </form>
 
@@ -118,7 +131,86 @@
       </footer>
     </div>
 
+    <div id="levelToast" class="level-toast engaged-only" aria-live="polite">
+      <span id="levelToastText">Level up!</span>
+    </div>
+
+    <div
+      id="levelUpModal"
+      class="levelup-modal"
+      aria-hidden="true"
+      role="dialog"
+      aria-label="Level up"
+    >
+      <div class="levelup-card">
+        <div class="levelup-media">
+          <img
+            src="assets/trophy.gif"
+            alt="Golden trophy"
+            class="levelup-trophy-img"
+          />
+          <img
+            src="assets/fire_work.gif"
+            alt="Fireworks"
+            class="levelup-fireworks-img"
+          />
+        </div>
+        <div class="levelup-text">
+          <h2 class="levelup-title">Level Up!</h2>
+          <p id="levelUpMessage" class="levelup-message">
+            You reached a new level.
+          </p>
+          <button id="levelUpOk" class="levelup-ok-btn" type="button">
+            Okay
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+
+    <div
+      id="profileModal"
+      class="profile-modal"
+      aria-hidden="true"
+      role="dialog"
+      aria-label="Profile"
+    >
+      <div class="profile-card">
+        <h2 class="profile-title">Profile</h2>
+        <p class="profile-row">
+          <span class="profile-label">Name</span>
+          <span id="profileName" class="profile-value">Guest</span>
+        </p>
+        <p class="profile-row">
+          <span class="profile-label">Username</span>
+          <span id="profileUsername" class="profile-value">-</span>
+        </p>
+        <p class="profile-row">
+          <span class="profile-label">Email</span>
+          <span id="profileEmail" class="profile-value">-</span>
+        </p>
+        <p class="profile-row">
+          <span class="profile-label">Level</span>
+          <span id="profileLevel" class="profile-value">1</span>
+        </p>
+        <p class="profile-row">
+          <span class="profile-label">XP</span>
+          <span id="profileXP" class="profile-value">0</span>
+        </p>
+        <p class="profile-row">
+          <span class="profile-label">Streak</span>
+          <span id="profileStreak" class="profile-value">0</span>
+        </p>
+        <p class="profile-row">
+          <span class="profile-label">Completed</span>
+          <span id="profileCompleted" class="profile-value">0</span>
+        </p>
+        <button id="profileClose" class="profile-close-btn" type="button">
+          Close
+        </button>
+      </div>
+    </div>
 
     <audio
       id="cheerAudio"

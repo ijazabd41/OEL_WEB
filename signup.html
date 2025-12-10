@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account – Dual Nature List</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="mode-engaged">
+    <div class="auth-gate" aria-label="Create account">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <h2 class="auth-title">Create your account</h2>
+          <p class="auth-subtitle">
+            Choose a name, email, and password to save your progress in the cloud.
+          </p>
+        </div>
+        <form id="signupForm" class="auth-form" autocomplete="off">
+          <input
+            id="suName"
+            class="auth-input"
+            type="text"
+            placeholder="Name"
+            aria-label="Name"
+          />
+          <input
+            id="suUsername"
+            class="auth-input"
+            type="text"
+            placeholder="Username"
+            aria-label="Username"
+          />
+          <input
+            id="suEmail"
+            class="auth-input"
+            type="email"
+            placeholder="Email"
+            aria-label="Email"
+          />
+          <input
+            id="suPassword"
+            class="auth-input"
+            type="password"
+            placeholder="Password"
+            aria-label="Password"
+          />
+          <div class="auth-actions">
+            <button id="suCreate" class="auth-btn" type="button">
+              Create account
+            </button>
+          </div>
+        </form>
+        <p id="suError" class="auth-error" aria-live="polite"></p>
+        <div class="auth-divider">
+          <span>or</span>
+        </div>
+        <button id="suBack" class="guest-btn" type="button">
+          Back to sign in
+        </button>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const nameInput = document.getElementById("suName");
+        const usernameInput = document.getElementById("suUsername");
+        const emailInput = document.getElementById("suEmail");
+        const passInput = document.getElementById("suPassword");
+        const createBtn = document.getElementById("suCreate");
+        const backBtn = document.getElementById("suBack");
+        const errorEl = document.getElementById("suError");
+        const API_BASE = window.location.origin + "/api";
+
+        async function handleSignup() {
+          const name = (nameInput.value || "").trim();
+          const username = (usernameInput.value || "").trim();
+          const email = (emailInput.value || "").trim();
+          const password = (passInput.value || "").trim();
+          if (!name || !username || !email || !password) {
+            errorEl.textContent =
+              "Please enter name, username, email, and password.";
+            return;
+          }
+          errorEl.textContent = "";
+          try {
+            const res = await fetch(API_BASE + "/auth/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password, username, name }),
+            });
+            if (!res.ok) {
+              let msg = "Could not create account.";
+              try {
+                const dataErr = await res.json();
+                if (dataErr && dataErr.error) msg = dataErr.error;
+              } catch (e) {}
+              errorEl.textContent = msg;
+              return;
+            }
+            const data = await res.json();
+            if (data && data.token) {
+              window.localStorage.setItem("dualNature_token", data.token);
+              window.localStorage.setItem(
+                "dualNature_email",
+                (data.user && data.user.email) || email
+              );
+              if (data.user) {
+                if (data.user.name) {
+                  window.localStorage.setItem("dualNature_name", data.user.name);
+                }
+                if (data.user.username) {
+                  window.localStorage.setItem("dualNature_username", data.user.username);
+                }
+              }
+              window.location.href = "/";
+            }
+          } catch (e) {
+            errorEl.textContent = "Network error while creating account.";
+          }
+        }
+
+        if (createBtn) {
+          createBtn.addEventListener("click", handleSignup);
+        }
+        if (backBtn) {
+          backBtn.addEventListener("click", () => {
+            window.location.href = "/login.html";
+          });
+        }
+      })();
+    </script>
+  </body>
+  </html>
+
+

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In – Dual Nature List</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="mode-engaged">
+    <div class="auth-gate" aria-label="Sign in">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <h1 class="app-title" style="margin: 0 0 8px; font-size: 1.4rem;">Dual Nature List</h1>
+          <p class="auth-subtitle" style="margin: 0 0 16px; font-size: 0.9rem;">
+            Minimal focus by day. Playful, gamified list by night.
+          </p>
+          <h2 class="auth-title">Welcome</h2>
+          <p class="auth-subtitle">
+            Manage your tasks in a calm, minimalist layout, then flip into a
+            rich, animated play mode with levels, streaks, and rewards.
+          </p>
+          <p class="auth-subtitle" style="margin-top: 8px; font-size: 0.85rem; color: #9ca3af;">
+            Sign in to continue where you left off, or continue as guest.
+          </p>
+        </div>
+        <form id="loginForm" class="auth-form" autocomplete="off">
+          <input
+            id="liIdentifier"
+            class="auth-input"
+            type="text"
+            placeholder="Email or username"
+            aria-label="Email or username"
+          />
+          <input
+            id="liPassword"
+            class="auth-input"
+            type="password"
+            placeholder="Password"
+            aria-label="Password"
+          />
+          <div class="auth-actions">
+            <button id="liSubmit" class="auth-btn" type="button">
+              Sign in
+            </button>
+            <button id="liGuest" class="guest-btn" type="button">
+              Continue as guest
+            </button>
+          </div>
+        </form>
+        <p id="liError" class="auth-error" aria-live="polite"></p>
+        <div class="auth-divider">
+          <span>or</span>
+        </div>
+        <p class="welcome-note">
+          Don't have an account?
+          <a href="signup.html">Create one here</a>.
+        </p>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const idInput = document.getElementById("liIdentifier");
+        const passInput = document.getElementById("liPassword");
+        const submitBtn = document.getElementById("liSubmit");
+        const guestBtn = document.getElementById("liGuest");
+        const errorEl = document.getElementById("liError");
+        const API_BASE = window.location.origin + "/api";
+
+        async function handleLogin() {
+          const identifier = (idInput.value || "").trim();
+          const password = (passInput.value || "").trim();
+          if (!identifier || !password) {
+            errorEl.textContent =
+              "Please enter either email or username, and password.";
+            return;
+          }
+          errorEl.textContent = "";
+          try {
+            const res = await fetch(API_BASE + "/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ identifier, password }),
+            });
+            if (!res.ok) {
+              let msg = "Could not sign in.";
+              try {
+                const dataErr = await res.json();
+                if (dataErr && dataErr.error) msg = dataErr.error;
+              } catch (_) {}
+              errorEl.textContent = msg;
+              return;
+            }
+            const data = await res.json();
+            if (data && data.token) {
+              window.localStorage.setItem("dualNature_token", data.token);
+              window.localStorage.setItem(
+                "dualNature_email",
+                (data.user && data.user.email) || identifier
+              );
+              if (data.user) {
+                if (data.user.name) {
+                  window.localStorage.setItem("dualNature_name", data.user.name);
+                }
+                if (data.user.username) {
+                  window.localStorage.setItem("dualNature_username", data.user.username);
+                }
+              }
+              window.localStorage.removeItem("dualNature_guest");
+              window.location.assign("/index.html");
+            }
+          } catch (e) {
+            errorEl.textContent = "Network error while signing in.";
+          }
+        }
+
+        if (submitBtn) {
+          submitBtn.addEventListener("click", handleLogin);
+        }
+
+        if (guestBtn) {
+          guestBtn.addEventListener("click", () => {
+            try {
+              window.localStorage.setItem("dualNature_guest", "1");
+              window.localStorage.removeItem("dualNature_token");
+              window.localStorage.removeItem("dualNature_email");
+              window.localStorage.removeItem("dualNature_name");
+              window.localStorage.removeItem("dualNature_username");
+            } catch (_) {}
+            window.location.assign("/index.html");
+          });
+        }
+      })();
+    </script>
+  </body>
+  </html>
+
+
