@@ -581,6 +581,7 @@
   }
 
   async function toggleItem(id, liElement) {
+  async function toggleItem(id, liElement) {
     const item = items.find((i) => i.id === id);
     if (!item) return;
     const wasCompleted = item.completed;
@@ -626,6 +627,7 @@
     persistState();
   }
 
+  async function deleteItem(id) {
   async function deleteItem(id) {
     const item = items.find((i) => i.id === id);
     items = items.filter((i) => i.id !== id);

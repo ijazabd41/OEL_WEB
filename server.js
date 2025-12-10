@@ -198,7 +198,7 @@ app.patch("/api/stats", authMiddleware, async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "login.html"));
+  res.sendFile(path.join(__dirname, "home.html"));
 });
 
 async function start() {
